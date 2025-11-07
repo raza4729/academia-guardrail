@@ -24,7 +24,7 @@ class InputGuardrail:
         if not self._language_check(abstract, self.cfg["language"]):
             raise ValueError("Abstract language not supported")
         # Merge instruction and text
-        combined = f"{instruction}\n\n{abstract}"
+        combined = f"[INST] {instruction}\n\n{abstract} [/INST]"
 
         # unsafe token cleaning
         safe_prompt = combined.replace("Ignore previous instructions", "[filtered]")
