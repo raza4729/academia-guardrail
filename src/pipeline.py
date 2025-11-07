@@ -36,7 +36,7 @@ class GuardrailPipeline:
         
         # Output Guardrails 
         outGuardrail_instance = OutputGuardrail(cfg=self.cfg)
-        results = outGuardrail_instance.check_completeness(output=output_text)
+        results = outGuardrail_instance.check_completeness(input=input["abstract"], output=output_text)
 
         return {
             "id": input.get("id", None),
