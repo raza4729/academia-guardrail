@@ -1,0 +1,9 @@
+{
+  "constraints": {
+    "min_sentences": 2,
+    "max_sentences": 5,
+    "require_citations": true,
+    "citation_pattern": "\\[\\d+\\]|\\(Source:",
+    "max_tokens": 120
+  }
+}
