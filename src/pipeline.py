@@ -1,0 +1,68 @@
+"""
+pipeline.py — Orchestrates the guardrails and model inference flow.
+"""
+
+from typing import Dict, Any
+from src.models import Mistral
+from .guardrails.InputGuargrail import  InputGuardrail
+from .guardrails.OutputGuardrail import OutputGuardrail
+import json, sys
+from pathlib import Path
+import kagglehub
+import csv
+
+class GuardrailPipeline:
+    def __init__(self, model=None):
+        # allow model injection for testing
+        self.model = model or Mistral()
+        self.cfg = {}
+
+    def run(self, input: Dict[str, Any]) -> Dict[str, Any]:
+        """Run the full guardrail pipeline on one test or user input."""
+
+        # load configs 
+        with open(r"src\\guardrails\\guardrails_config.json") as f:
+            self.cfg = json.load(f)["constraints"]
+        
+        # Input Guardrails
+        inGuardrail_instance = InputGuardrail(cfg=self.cfg)
+        prompt = inGuardrail_instance.build_prompt(input_data=input)
+        
+        # Model Inference
+        try:
+            output_text = self.model.inference(prompt)
+        except Exception as e:
+            return {"error": f"Model error: {e}"}
+        
+        # Output Guardrails 
+        outGuardrail_instance = OutputGuardrail(cfg=self.cfg)
+        results = outGuardrail_instance.check_completeness(output=output_text)
+
+        return {
+            "id": input.get("id", None),
+            "task": input.get("absract", None),
+            "input_prompt": prompt,
+            "original_output": results.get("oiriginal_output", None),
+            "violations": results.get("violations", None),
+        }
+
+
+# ---- entry point ---- #
+if __name__ == "__main__":
+    
+    # load the pubmed dataset from kaggle
+    pubmed_data = []
+    path = kagglehub.dataset_download("bonhart/pubmed-abstracts")
+
+    pipe = GuardrailPipeline()
+
+    with open(path + "\\pubmed_abstracts.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        counter = 0
+        for row in reader:
+            line = {"abstract": row["deep_learning"], "citation": row["deep_learning_links"]}
+            result = pipe.run(line)
+            print(json.dumps(result, ensure_ascii=False))
+            counter += 1
+            if counter >= 5:
+                break
