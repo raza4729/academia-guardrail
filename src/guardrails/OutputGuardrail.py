@@ -1,13 +1,14 @@
 from nltk.tokenize import sent_tokenize
-from langdetect import detect_langs, detect, LangDetectException
+from langdetect import detect, LangDetectException
 import re 
 
 class OutputGuardrail:
-    def __init__(self, cfg):
+    def __init__(self, cfg, logger):
         self.cfg = cfg
+        self.logger = logger.getChild("output")
     
     @staticmethod
-    def _citation_check(text: str, pattern: str) -> bool:
+    def _detect_citation_pattern(text: str, pattern: str) -> bool:
         matches = []
         for pat in pattern:
             matches.extend(re.findall(pat, text))
@@ -44,20 +45,23 @@ class OutputGuardrail:
         # 1. Check language constraints
         if not self._language_check(output, self.cfg["language"]):
             violations.append(f"Language mismatch: expected {self.cfg['language']}")
+            self.logger.error("Language mismatch!")
 
         # 2. Check length constraints 
         if not self._validate_sent_length(output, self.cfg["min_sentences"],  self.cfg["max_sentences"]):
             n = len(sent_tokenize(output, language="english"))
             violations.append(f"Sentence count {n} outside [{self.cfg["min_sentences"]}, {self.cfg["max_sentences"]}]")
-        
+            self.logger.error("Sentence count violation!")
+
         # 3. Check citation presence
         if self.cfg["require_citations"]:
-            if not self._citation_check(output, self.cfg["citation_patterns"]):
+            if not self._detect_citation_pattern(output, self.cfg["citation_patterns"]):
                 violations.append("Missing required citations in the output.")
-
+                self.logger.error("Missing citations!")
         # 4. Check relevance
         if not self._check_relevance(input, output):
             violations.append("Output is not relevant to the input prompt.")
+            self.logger.error("Relevance check failed!")   
 
         if not violations:
             return {"violations": None, "oiriginal_output": output}

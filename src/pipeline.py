@@ -2,14 +2,22 @@
 pipeline.py — Orchestrates the guardrails and model inference flow.
 """
 
-from typing import Dict, Any
 from src.models import Mistral
 from .guardrails.InputGuargrail import  InputGuardrail
 from .guardrails.OutputGuardrail import OutputGuardrail
+
+from typing import Dict, Any
 import json, sys
 from pathlib import Path
 import kagglehub
 import csv
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+)
+logger = logging.getLogger("guardrails.pipeline")
 
 class GuardrailPipeline:
     def __init__(self, model=None):
@@ -25,7 +33,7 @@ class GuardrailPipeline:
             self.cfg = json.load(f)["constraints"]
         
         # Input Guardrails
-        inGuardrail_instance = InputGuardrail(cfg=self.cfg)
+        inGuardrail_instance = InputGuardrail(cfg=self.cfg, logger=logger)
         prompt = inGuardrail_instance.build_prompt(input_data=input)
         
         # Model Inference
@@ -35,7 +43,7 @@ class GuardrailPipeline:
             return {"error": f"Model error: {e}"}
         
         # Output Guardrails 
-        outGuardrail_instance = OutputGuardrail(cfg=self.cfg)
+        outGuardrail_instance = OutputGuardrail(cfg=self.cfg, logger=logger)
         results = outGuardrail_instance.check_completeness(input=input["abstract"], output=output_text)
 
         return {
