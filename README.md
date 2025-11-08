@@ -62,7 +62,7 @@ print(result)
 
 ---
 
-## 🧪 Future Work
+## Future Work
 
 * Add citation accuracy scoring
 * Integrate embedding-based relevance check
