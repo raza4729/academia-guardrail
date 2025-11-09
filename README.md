@@ -1,6 +1,6 @@
 # Guardrails
 
-A simple, from-scratch project for building and testing **custom LLM guardrails**, built to keep abstracts concise, citations accurate, and short.
+A simple, from-scratch project for building and testing **custom LLM guardrails**, developed to force model to generate short and concise abstracts with citations.
 
 
 ## Features
@@ -9,6 +9,16 @@ A simple, from-scratch project for building and testing **custom LLM guardrails*
 * **Output Guardrails**: sentence length, citation detection, and text relevence.
 * **Config-Driven**: thresholds (e.g., min sentences, language).
 * **Extensible Design**: add your own checks or plug in domain-specific validators.
+
+
+## Models
+
+* Mistral quantized version: https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF
+
+
+## Data
+
+We used [PubMed](https://www.kaggle.com/datasets/bonhart/pubmed-abstracts/code) abstracts for testing the summarization and citation guardrails.
 
 ---
 
@@ -42,10 +52,15 @@ src/
  ├── guardrails/
  │    ├── InputGuardrail.py
  │    ├── OutputGuardrail.py
- │
+ |    └── guardrails_config.json
  ├── pipeline.py
- └── config/
-      └── guardrails_config.json
+ └── models.py
+tests/
+ ├── test_cases.py
+ └── test_results.md
+requirements.txt
+README.md
+.gitignore
 ```
 
 ---
@@ -54,9 +69,14 @@ src/
 
 ```python
 from guardrails.OutputGuardrail import OutputGuardrail
-cfg = {"language": "en", "min_sentences": 3}
+cfg = {"language": "en", "min_sentences": 1, "max_sentences": 3,     "citation_patterns": [
+      "\\[\\d+\\]",
+      "\\([A-Z][a-z]+ et al\\., \\d{4}\\)",
+      "https?://\\S+",
+      "\\(Source:.*?\\)"
+    ]}
 guardrail = OutputGuardrail(cfg)
-result = guardrail.check_completeness(output="Your model output text")
+result = guardrail.check_completeness(input="your prompt here", output="Your model output text")
 print(result)
 ```
 
