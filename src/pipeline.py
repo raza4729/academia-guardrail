@@ -12,6 +12,7 @@ from pathlib import Path
 import kagglehub
 import csv
 import logging
+import pprint as pp
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,7 +41,7 @@ class GuardrailPipeline:
             logger.warning("Input blocked: %s", e)
             return {
                 "id": input.get("id", None),
-                "task": input.get("abstract", None),
+                "task": input.get("abstract", "")[:100],
                 "Skipped": True,
                 "violations": [str(e)],
             }    
@@ -56,11 +57,11 @@ class GuardrailPipeline:
         results = outGuardrail_instance.check_completeness(input=input["abstract"], output=output_text)
 
         return {
-            "id": input.get("id", None),
-            "task": input.get("abstract", None),
-            "input_prompt": prompt,
-            "original_output": results.get("original_output", None),
-            "violations": results.get("violations", None),
+            "id": input.get("id"),
+            "task": (input.get("abstract") or "")[:100],
+            "input_prompt": (prompt or "")[:100],
+            "original_output": (results.get("original_output") or ""),
+            "violations": results.get("output_violations"),
         }
 
 
@@ -77,9 +78,11 @@ if __name__ == "__main__":
         reader = csv.DictReader(f)
         counter = 0
         for row in reader:
-            line = {"abstract": row["deep_learning"], "citation": row["deep_learning_links"]}
+            id =  row["deep_learning_links"].split("/")[-1] or None
+            line = {"id": id, "abstract": row["deep_learning"], "citation": row["deep_learning_links"]}
             result = pipe.run(line)
-            print(json.dumps(result, ensure_ascii=False))
+            pp.pprint(result)
+            print("\n")
             counter += 1
             if counter >= 5:
                 break
