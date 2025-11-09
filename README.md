@@ -85,7 +85,11 @@ print(result)
 ## Future Work
 
 * Add citation accuracy scoring
-* Integrate embedding-based relevance check
 * Introduce adaptive confidence thresholds
+* Dockerize each service
+* Add embedding-based semantic similarity for deeper relevance checks (weighted).
+* Introduce rule-based vs. ML-based guardrail hybrid mode.
+* Support multilingual guardrail profiles (per language).
+* Log violations to a central monitoring service.
 
 ---
