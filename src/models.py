@@ -29,7 +29,7 @@ class Mistral(Model):
             repo_id=model_id,
             filename=model_path,
             local_dir=self._models_cache_dir,
-            local_files_only=True   
+            local_files_only=False   # set to True once model is cached: pending 
         )
         self._model = None
 
